@@ -9,6 +9,7 @@ yarn-error.log*
 .turbo
 .idea
 .vscode
+.vercel
 *.suo
 *.ntvs*
 *.njsproj

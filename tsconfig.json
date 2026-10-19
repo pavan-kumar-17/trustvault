@@ -15,6 +15,6 @@
     "resolveJsonModule": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["server/src/**/*", "tests/**/*"],
+  "include": ["server/src/**/*", "tests/**/*", "api/**/*"],
   "exclude": ["node_modules", "dist", "client"]
 }
