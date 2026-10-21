@@ -117,7 +117,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({
           borderLeft: '4px solid var(--emerald-primary)',
         }}
       >
-        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1.25rem' }}>
+        <div className="admin-chain-banner">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <div
@@ -143,7 +143,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div className="admin-chain-actions">
             {verification && (
               <div
                 style={{
@@ -157,6 +157,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({
                   color: verification.valid ? 'var(--emerald-dark)' : 'var(--color-rose)',
                   fontSize: '0.825rem',
                   fontWeight: 600,
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {verification.valid ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
@@ -245,9 +246,9 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({
 
       {/* 4. Global Security Activity Feed */}
       <div className="table-card">
-        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-subtle)', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+        <div className="admin-section-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <Activity size={18} className="text-emerald" />
+            <Activity size={18} className="text-emerald flex-shrink-0" />
             <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
               Global Security Audit Trail ({totalEvents} events)
             </h3>

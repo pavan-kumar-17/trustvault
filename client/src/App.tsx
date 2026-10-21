@@ -107,30 +107,29 @@ export const App: React.FC = () => {
       {/* Mobile Drawer Backdrop */}
       {isMobileMenuOpen && (
         <div
-          className="modal-overlay mobile-only"
+          className="sidebar-backdrop mobile-only"
           onClick={() => setIsMobileMenuOpen(false)}
-          style={{ zIndex: 35 }}
         />
       )}
 
       {/* 1. Deep Navy Sidebar */}
-      <div className={isMobileMenuOpen ? 'sidebar-nav mobile-open' : ''}>
-        <Sidebar
-          currentUser={currentUser}
-          fixtures={fixtures}
-          onSwitchUser={handleSwitchUser}
-          activeView={activeView}
-          setActiveView={(view) => {
-            setActiveView(view);
-            setIsMobileMenuOpen(false);
-          }}
-          isCollapsed={isSidebarCollapsed}
-          setIsCollapsed={setIsSidebarCollapsed}
-          totalDocsCount={vaultStats.count}
-          totalStorageBytes={vaultStats.bytes}
-          chainVerified={chainVerification ? chainVerification.valid : null}
-        />
-      </div>
+      <Sidebar
+        currentUser={currentUser}
+        fixtures={fixtures}
+        onSwitchUser={handleSwitchUser}
+        activeView={activeView}
+        setActiveView={(view) => {
+          setActiveView(view);
+          setIsMobileMenuOpen(false);
+        }}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
+        totalDocsCount={vaultStats.count}
+        totalStorageBytes={vaultStats.bytes}
+        chainVerified={chainVerification ? chainVerification.valid : null}
+        isMobileOpen={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
+      />
 
       {/* 2. White SaaS Workspace Area */}
       <div className="workspace-container">

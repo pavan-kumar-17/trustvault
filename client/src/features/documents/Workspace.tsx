@@ -184,7 +184,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
         </div>
 
         {canUpload && (
-          <button className="btn btn-primary" onClick={onOpenUpload}>
+          <button className="btn btn-primary page-upload-btn" onClick={onOpenUpload}>
             <Upload size={16} />
             <span>Upload Document</span>
           </button>

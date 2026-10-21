@@ -13,7 +13,8 @@ import {
   Lock,
   Layers,
   FileText,
-  UserCheck
+  UserCheck,
+  X
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -27,6 +28,8 @@ interface SidebarProps {
   totalDocsCount: number;
   totalStorageBytes: number;
   chainVerified: boolean | null;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -40,6 +43,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   totalDocsCount,
   totalStorageBytes,
   chainVerified,
+  isMobileOpen = false,
+  onCloseMobile,
 }) => {
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 KB';
@@ -56,18 +61,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return name.slice(0, 2).toUpperCase();
   };
 
+  const showExpanded = !isCollapsed || isMobileOpen;
+
   return (
     <aside
-      className={`sidebar-nav ${isCollapsed ? 'collapsed' : ''}`}
+      className={`sidebar-nav ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}
       aria-label="Main Navigation"
     >
       {/* Brand Header */}
       <div className="sidebar-brand">
-        <div className="brand-logo-wrap" onClick={() => setActiveView('workspace')}>
+        <div
+          className="brand-logo-wrap"
+          onClick={() => {
+            setActiveView('workspace');
+            onCloseMobile?.();
+          }}
+        >
           <div className="brand-icon-box">
             <Shield size={20} className="text-white" />
           </div>
-          {!isCollapsed && (
+          {showExpanded && (
             <div className="brand-text">
               <div className="brand-title">
                 <span>TrustVault</span>
@@ -78,28 +91,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        <button
-          className="sidebar-toggle-btn"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
+        <div className="sidebar-brand-controls">
+          <button
+            className="sidebar-toggle-btn desktop-only"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+
+          <button
+            className="sidebar-close-btn mobile-only"
+            onClick={onCloseMobile}
+            title="Close menu"
+            aria-label="Close menu"
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Navigation Links */}
       <nav className="sidebar-menu">
         <div className="sidebar-section">
-          {!isCollapsed && <span className="sidebar-section-title">WORKSPACE</span>}
+          {showExpanded && <span className="sidebar-section-title">WORKSPACE</span>}
           <div className="sidebar-links">
             <button
               className={`sidebar-link ${activeView === 'workspace' ? 'active' : ''}`}
-              onClick={() => setActiveView('workspace')}
+              onClick={() => {
+                setActiveView('workspace');
+                onCloseMobile?.();
+              }}
               title="Documents & Files"
             >
               <Files size={18} className="link-icon" />
-              {!isCollapsed && (
+              {showExpanded && (
                 <>
                   <span className="link-label">My Documents</span>
                   {totalDocsCount > 0 && (
@@ -112,16 +139,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <div className="sidebar-section">
-          {!isCollapsed && <span className="sidebar-section-title">GOVERNANCE & SECURITY</span>}
+          {showExpanded && <span className="sidebar-section-title">GOVERNANCE & SECURITY</span>}
           <div className="sidebar-links">
             {currentUser?.role === 'administrator' ? (
               <button
                 className={`sidebar-link ${activeView === 'admin' ? 'active' : ''}`}
-                onClick={() => setActiveView('admin')}
+                onClick={() => {
+                  setActiveView('admin');
+                  onCloseMobile?.();
+                }}
                 title="Administrator Console"
               >
                 <ShieldCheck size={18} className="link-icon" />
-                {!isCollapsed && (
+                {showExpanded && (
                   <>
                     <span className="link-label">Admin Console</span>
                     <span className="role-tag admin">Admin</span>
@@ -134,7 +164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 title="Switch to Alice Admin to manage access governance"
               >
                 <Lock size={18} className="link-icon text-muted" />
-                {!isCollapsed && (
+                {showExpanded && (
                   <>
                     <span className="link-label text-muted">Admin Console</span>
                     <span className="role-tag locked">Restricted</span>
@@ -146,8 +176,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </nav>
 
-      {/* Vault Real Storage Metrics Box (Non-collapsed) */}
-      {!isCollapsed && (
+      {/* Vault Real Storage Metrics Box (Non-collapsed or Mobile) */}
+      {showExpanded && (
         <div className="vault-stats-card">
           <div className="stats-header">
             <HardDrive size={16} className="text-emerald" />
@@ -191,7 +221,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
           </div>
 
-          {!isCollapsed && (
+          {showExpanded && (
             <div className="user-info">
               <div className="user-name-row">
                 <span className="user-display-name">
@@ -206,7 +236,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <select
                   className="persona-dropdown"
                   value={currentUser?.id || ''}
-                  onChange={(e) => onSwitchUser(e.target.value)}
+                  onChange={(e) => {
+                    onSwitchUser(e.target.value);
+                    onCloseMobile?.();
+                  }}
                   title="Switch Persona for Evaluation"
                 >
                   {fixtures.map((f) => (

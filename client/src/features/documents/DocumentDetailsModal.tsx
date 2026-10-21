@@ -243,17 +243,7 @@ export const DocumentDetailsModal: React.FC<DocumentDetailsModalProps> = ({
               {activeTab === 'overview' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   {/* Metadata Grid */}
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(2, 1fr)',
-                      gap: '1rem',
-                      background: '#f8fafc',
-                      padding: '1.25rem',
-                      borderRadius: '10px',
-                      border: '1px solid var(--border-subtle)',
-                    }}
-                  >
+                  <div className="modal-meta-grid">
                     <div>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>
                         Document Owner
@@ -282,31 +272,24 @@ export const DocumentDetailsModal: React.FC<DocumentDetailsModalProps> = ({
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>
                         Detected MIME Type
                       </span>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.1rem', wordBreak: 'break-all' }}>
                         {doc.detectedContentType}
                       </p>
                     </div>
                   </div>
 
                   {/* SHA-256 Digest Box */}
-                  <div
-                    style={{
-                      background: '#f8fafc',
-                      padding: '0.85rem 1rem',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-subtle)',
-                    }}
-                  >
+                  <div className="modal-sha-box">
                     <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>
                       Cryptographic SHA-256 Checksum
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginTop: '0.35rem' }}>
+                    <div className="modal-sha-row">
                       <code className="font-mono" style={{ fontSize: '0.8rem', color: '#0369a1', wordBreak: 'break-all' }}>
                         {doc.sha256Hex}
                       </code>
                       <button
-                        className="btn btn-secondary"
-                        style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
+                        className="btn btn-secondary flex-shrink-0"
+                        style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
                         onClick={handleCopySha}
                         title="Copy SHA-256"
                       >
@@ -317,8 +300,8 @@ export const DocumentDetailsModal: React.FC<DocumentDetailsModalProps> = ({
                   </div>
 
                   {/* Action Bar */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
-                    <div style={{ display: 'flex', gap: '0.6rem' }}>
+                  <div className="modal-actions-bar">
+                    <div className="modal-actions-left">
                       <button className="btn btn-primary" onClick={handleDownload}>
                         <Download size={16} />
                         <span>Download Decrypted Stream</span>
@@ -352,7 +335,7 @@ export const DocumentDetailsModal: React.FC<DocumentDetailsModalProps> = ({
                       <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.75rem' }}>
                         Update Document Metadata
                       </h4>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                      <div className="modal-edit-grid">
                         <div>
                           <label className="form-label">Display Name</label>
                           <input
@@ -370,7 +353,7 @@ export const DocumentDetailsModal: React.FC<DocumentDetailsModalProps> = ({
                           />
                         </div>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', flexWrap: 'wrap' }}>
                         <button className="btn btn-secondary" onClick={() => setIsEditing(false)}>
                           Cancel
                         </button>
@@ -404,7 +387,7 @@ export const DocumentDetailsModal: React.FC<DocumentDetailsModalProps> = ({
                         onChange={(e) => setDeleteReason(e.target.value)}
                         style={{ marginBottom: '0.75rem' }}
                       />
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', flexWrap: 'wrap' }}>
                         <button className="btn btn-secondary" onClick={() => setShowDeleteConfirm(false)}>
                           Cancel
                         </button>
@@ -423,18 +406,9 @@ export const DocumentDetailsModal: React.FC<DocumentDetailsModalProps> = ({
                   {/* Grant Access Form */}
                   <form
                     onSubmit={handleAddGrant}
-                    style={{
-                      display: 'flex',
-                      gap: '0.75rem',
-                      alignItems: 'center',
-                      marginBottom: '1.25rem',
-                      background: '#f8fafc',
-                      padding: '1rem',
-                      borderRadius: '10px',
-                      border: '1px solid var(--border-subtle)',
-                    }}
+                    className="grant-access-form"
                   >
-                    <div style={{ flex: 1 }}>
+                    <div className="grant-user-select-wrap">
                       <select
                         className="input-field"
                         value={targetUserId}
@@ -452,7 +426,7 @@ export const DocumentDetailsModal: React.FC<DocumentDetailsModalProps> = ({
                       </select>
                     </div>
 
-                    <div style={{ width: '150px' }}>
+                    <div className="grant-level-select-wrap">
                       <select
                         className="input-field"
                         value={grantLevel}
@@ -465,7 +439,7 @@ export const DocumentDetailsModal: React.FC<DocumentDetailsModalProps> = ({
 
                     <button
                       type="submit"
-                      className="btn btn-primary"
+                      className="btn btn-primary grant-submit-btn"
                       disabled={grantLoading || !targetUserId}
                     >
                       <UserPlus size={16} />
@@ -475,6 +449,7 @@ export const DocumentDetailsModal: React.FC<DocumentDetailsModalProps> = ({
 
                   {/* Grants Table */}
                   <div className="table-card">
+                    <div className="table-wrapper">
                     <table className="saas-table">
                       <thead>
                         <tr>
@@ -519,6 +494,7 @@ export const DocumentDetailsModal: React.FC<DocumentDetailsModalProps> = ({
                         )}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 </div>
               )}
@@ -526,58 +502,60 @@ export const DocumentDetailsModal: React.FC<DocumentDetailsModalProps> = ({
               {/* TAB 3: AUDIT TRAIL */}
               {activeTab === 'audit' && canManageAccess && (
                 <div className="table-card">
-                  <table className="saas-table">
-                    <thead>
-                      <tr>
-                        <th>Seq</th>
-                        <th>Time</th>
-                        <th>Actor</th>
-                        <th>Action</th>
-                        <th>Outcome</th>
-                        <th>Reason</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {auditEvents.length === 0 ? (
+                  <div className="table-wrapper">
+                    <table className="saas-table">
+                      <thead>
                         <tr>
-                          <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>
-                            No audit activity recorded for this document.
-                          </td>
+                          <th>Seq</th>
+                          <th>Time</th>
+                          <th>Actor</th>
+                          <th>Action</th>
+                          <th>Outcome</th>
+                          <th>Reason</th>
                         </tr>
-                      ) : (
-                        auditEvents.map((evt) => (
-                          <tr key={evt.sequence}>
-                            <td className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                              #{evt.sequence}
-                            </td>
-                            <td style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                              {new Date(evt.occurredAt).toLocaleTimeString()}
-                            </td>
-                            <td style={{ fontSize: '0.85rem', fontWeight: 500 }}>
-                              {evt.actorLabelSnapshot || 'System'}
-                            </td>
-                            <td style={{ fontWeight: 600, fontSize: '0.8rem' }}>
-                              {evt.action}
-                            </td>
-                            <td>
-                              <span
-                                className={`badge ${
-                                  evt.outcome === 'allowed' || evt.outcome === 'success'
-                                    ? 'badge-status-active'
-                                    : 'badge-status-inactive'
-                                }`}
-                              >
-                                {evt.outcome}
-                              </span>
-                            </td>
-                            <td style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
-                              {evt.reasonCode}
+                      </thead>
+                      <tbody>
+                        {auditEvents.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>
+                              No audit activity recorded for this document.
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        ) : (
+                          auditEvents.map((evt) => (
+                            <tr key={evt.sequence}>
+                              <td className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                                #{evt.sequence}
+                              </td>
+                              <td style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                                {new Date(evt.occurredAt).toLocaleTimeString()}
+                              </td>
+                              <td style={{ fontSize: '0.85rem', fontWeight: 500 }}>
+                                {evt.actorLabelSnapshot || 'System'}
+                              </td>
+                              <td style={{ fontWeight: 600, fontSize: '0.8rem' }}>
+                                {evt.action}
+                              </td>
+                              <td>
+                                <span
+                                  className={`badge ${
+                                    evt.outcome === 'allowed' || evt.outcome === 'success'
+                                      ? 'badge-status-active'
+                                      : 'badge-status-inactive'
+                                  }`}
+                                >
+                                  {evt.outcome}
+                                </span>
+                              </td>
+                              <td style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+                                {evt.reasonCode}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>
