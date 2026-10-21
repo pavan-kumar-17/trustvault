@@ -6,31 +6,37 @@ import {
   ShieldAlert,
   Users,
   Activity,
-  CheckCircle,
+  CheckCircle2,
   AlertTriangle,
   RefreshCw,
   Power,
   Lock,
+  Filter,
+  Check
 } from 'lucide-react';
 
 interface AdminConsoleProps {
   currentUser: UserProfile | null;
   onRefreshGlobal: () => void;
+  onVerificationUpdate?: (result: ChainVerificationResult | null) => void;
 }
 
-export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentUser, onRefreshGlobal }) => {
+export const AdminConsole: React.FC<AdminConsoleProps> = ({
+  currentUser,
+  onRefreshGlobal,
+  onVerificationUpdate,
+}) => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [auditEvents, setAuditEvents] = useState<AuditEventItem[]>([]);
   const [totalEvents, setTotalEvents] = useState<number>(0);
   const [verification, setVerification] = useState<ChainVerificationResult | null>(null);
   const [verifying, setVerifying] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [actionFilter, setActionFilter] = useState<string>('');
   const [outcomeFilter, setOutcomeFilter] = useState<string>('');
 
   useEffect(() => {
     loadAdminData();
-  }, [actionFilter, outcomeFilter]);
+  }, [outcomeFilter]);
 
   const loadAdminData = async () => {
     setLoading(true);
@@ -38,7 +44,6 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentUser, onRefre
       const [usersData, auditData] = await Promise.all([
         api.getAdminUsers(),
         api.getAdminAudit({
-          action: actionFilter || undefined,
           outcome: outcomeFilter || undefined,
           limit: 30,
         }),
@@ -80,7 +85,10 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentUser, onRefre
     try {
       const res = await api.verifyAuditChain();
       setVerification(res);
-      loadAdminData(); // Refresh audit to include the verification audit entry
+      if (onVerificationUpdate) {
+        onVerificationUpdate(res);
+      }
+      loadAdminData();
     } catch (err: any) {
       alert(`Verification failed: ${err.message}`);
     } finally {
@@ -89,37 +97,73 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentUser, onRefre
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      {/* Cryptographic Chain Integrity Card */}
-      <div className="glass-panel" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 27, 75, 0.5))', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+      {/* 1. Page Title */}
+      <div className="page-header-row">
+        <div>
+          <h1 className="page-title">Administrator Console</h1>
+          <p className="page-subtitle">
+            Cryptographic audit chain verification, user directory governance, and global security activity.
+          </p>
+        </div>
+      </div>
+
+      {/* 2. Cryptographic Hash Chain Card */}
+      <div
+        className="table-card"
+        style={{
+          padding: '1.5rem',
+          background: '#ffffff',
+          borderLeft: '4px solid var(--emerald-primary)',
+        }}
+      >
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1.25rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #a855f7, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ShieldCheck size={20} color="#fff" />
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'var(--emerald-light)',
+                  color: 'var(--emerald-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <ShieldCheck size={20} />
               </div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>Tamper-Evident Audit Hash Chain</h3>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                Tamper-Evident Cryptographic Hash Chain
+              </h3>
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-              Every security action is linked via a serialized SHA-256 cryptographic chain. The runtime role is prohibited from mutating or deleting audit records.
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.35rem', maxWidth: '680px' }}>
+              Every security action is cryptographically serialized into a SHA-256 hash chain with database-level triggers preventing mutation or deletion.
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             {verification && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 1rem',
-                borderRadius: '8px',
-                background: verification.valid ? 'rgba(16, 185, 129, 0.15)' : 'rgba(244, 63, 94, 0.2)',
-                border: `1px solid ${verification.valid ? 'rgba(16, 185, 129, 0.3)' : 'rgba(244, 63, 94, 0.4)'}`,
-                color: verification.valid ? '#34d399' : '#fb7185'
-              }}>
-                {verification.valid ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                  {verification.valid ? `Chain Verified (${verification.checkedCount} events unbroken)` : `Tamper Detected at #${verification.errorAtSequence}`}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '8px',
+                  background: verification.valid ? 'var(--emerald-light)' : 'var(--color-rose-light)',
+                  border: `1px solid ${verification.valid ? 'var(--emerald-border)' : 'var(--color-rose-border)'}`,
+                  color: verification.valid ? 'var(--emerald-dark)' : 'var(--color-rose)',
+                  fontSize: '0.825rem',
+                  fontWeight: 600,
+                }}
+              >
+                {verification.valid ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+                <span>
+                  {verification.valid
+                    ? `Chain Verified (${verification.checkedCount} events intact)`
+                    : `Tamper Detected at #${verification.errorAtSequence}`}
                 </span>
               </div>
             )}
@@ -128,32 +172,33 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentUser, onRefre
               className="btn btn-primary"
               onClick={handleVerifyChain}
               disabled={verifying}
-              style={{ background: 'linear-gradient(135deg, #6366f1, #06b6d4)' }}
             >
-              <RefreshCw size={16} className={verifying ? 'spin' : ''} />
-              {verifying ? 'Verifying Chain...' : 'Verify Chain Integrity'}
+              <RefreshCw size={15} className={verifying ? 'spin' : ''} />
+              <span>{verifying ? 'Verifying Integrity...' : 'Verify Chain Integrity'}</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* User Directory Management */}
-      <div className="glass-panel" style={{ padding: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
-          <Users size={20} color="#818cf8" />
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 600 }}>User Management & Immediate Account Control</h3>
+      {/* 3. User Directory Management */}
+      <div className="table-card">
+        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <Users size={18} className="text-emerald" />
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
+            User Management & Immediate Account Control
+          </h3>
         </div>
 
         <div className="table-wrapper">
-          <table className="custom-table">
+          <table className="saas-table">
             <thead>
               <tr>
-                <th>User</th>
+                <th>Persona / Name</th>
                 <th>Email</th>
                 <th>Role</th>
                 <th>Account Status</th>
                 <th>Created</th>
-                <th style={{ textAlign: 'right' }}>Status Toggle</th>
+                <th style={{ textAlign: 'right' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -166,12 +211,12 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentUser, onRefre
                     </td>
                     <td style={{ color: 'var(--text-muted)' }}>{u.email}</td>
                     <td>
-                      <span className={`badge badge-${u.role === 'administrator' ? 'admin' : u.role === 'document_owner' ? 'owner' : 'viewer'}`}>
-                        {u.role}
+                      <span className={`badge badge-role-${u.role === 'administrator' ? 'admin' : u.role === 'document_owner' ? 'owner' : 'viewer'}`}>
+                        {u.role.replace('_', ' ')}
                       </span>
                     </td>
                     <td>
-                      <span className={`badge badge-${u.isActive ? 'active' : 'inactive'}`}>
+                      <span className={`badge ${u.isActive ? 'badge-status-active' : 'badge-status-inactive'}`}>
                         {u.isActive ? 'Active' : 'Deactivated'}
                       </span>
                     </td>
@@ -187,7 +232,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentUser, onRefre
                         title={isSelf ? 'Cannot deactivate own admin account' : undefined}
                       >
                         <Power size={13} />
-                        {u.isActive ? 'Deactivate' : 'Activate'}
+                        <span>{u.isActive ? 'Deactivate' : 'Activate'}</span>
                       </button>
                     </td>
                   </tr>
@@ -198,20 +243,22 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentUser, onRefre
         </div>
       </div>
 
-      {/* Global Security Activity Feed */}
-      <div className="glass-panel" style={{ padding: '1.5rem' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+      {/* 4. Global Security Activity Feed */}
+      <div className="table-card">
+        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-subtle)', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <Activity size={20} color="#06b6d4" />
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 600 }}>Global Security Audit Trail ({totalEvents} events)</h3>
+            <Activity size={18} className="text-emerald" />
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
+              Global Security Audit Trail ({totalEvents} events)
+            </h3>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div className="select-wrapper">
+            <Filter size={14} className="select-icon" />
             <select
-              className="input-field"
+              className="custom-select"
               value={outcomeFilter}
               onChange={(e) => setOutcomeFilter(e.target.value)}
-              style={{ width: 'auto', padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
             >
               <option value="">All Outcomes</option>
               <option value="allowed">Allowed / Success</option>
@@ -221,7 +268,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentUser, onRefre
         </div>
 
         <div className="table-wrapper">
-          <table className="custom-table">
+          <table className="saas-table">
             <thead>
               <tr>
                 <th>Seq</th>
@@ -246,14 +293,20 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentUser, onRefre
                   <td style={{ fontSize: '0.85rem', fontWeight: 500 }}>
                     {evt.actorLabelSnapshot || 'Unauthenticated'}
                   </td>
-                  <td style={{ fontWeight: 600, fontSize: '0.8rem', color: '#cbd5e1' }}>
+                  <td style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-main)' }}>
                     {evt.action}
                   </td>
                   <td style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
                     {evt.targetType} {evt.targetId ? `(${evt.targetId.slice(0, 8)}...)` : ''}
                   </td>
                   <td>
-                    <span className={`badge badge-${evt.outcome === 'allowed' || evt.outcome === 'success' ? 'active' : 'inactive'}`}>
+                    <span
+                      className={`badge ${
+                        evt.outcome === 'allowed' || evt.outcome === 'success'
+                          ? 'badge-status-active'
+                          : 'badge-status-inactive'
+                      }`}
+                    >
                       {evt.outcome}
                     </span>
                   </td>
@@ -261,7 +314,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentUser, onRefre
                     {evt.reasonCode}
                   </td>
                   <td>
-                    <code className="font-mono" style={{ fontSize: '0.7rem', color: '#64748b' }} title={evt.eventHash}>
+                    <code className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }} title={evt.eventHash}>
                       {evt.eventHash.slice(0, 10)}...
                     </code>
                   </td>
