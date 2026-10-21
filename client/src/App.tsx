@@ -7,13 +7,16 @@ import { Workspace } from './features/documents/Workspace.js';
 import { UploadModal } from './features/documents/UploadModal.js';
 import { DocumentDetailsModal } from './features/documents/DocumentDetailsModal.js';
 import { AdminConsole } from './features/admin/AdminConsole.js';
-import { ShieldAlert, RefreshCw } from 'lucide-react';
+import { ShieldAlert, RefreshCw, Settings } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [fixtures, setFixtures] = useState<FixturePersona[]>([]);
   const [activeView, setActiveView] = useState<'workspace' | 'admin'>('workspace');
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+
+  // Active navigation category ('all' | 'my' | 'shared')
+  const [activeNavCategory, setActiveNavCategory] = useState<'all' | 'my' | 'shared'>('all');
 
   // Responsive sidebar state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
@@ -24,6 +27,7 @@ export const App: React.FC = () => {
 
   // Modals state
   const [isUploadOpen, setIsUploadOpen] = useState<boolean>(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
 
   // Real Vault metrics computed from loaded documents
@@ -38,6 +42,32 @@ export const App: React.FC = () => {
     checkedCount: number;
   } | null>(null);
   const [isVerifyingChain, setIsVerifyingChain] = useState<boolean>(false);
+
+  // Prevent background scrolling while mobile drawer is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
+
+  // Handle Escape key to close mobile drawer and open modals
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isMobileMenuOpen) setIsMobileMenuOpen(false);
+        if (isSettingsOpen) setIsSettingsOpen(false);
+        if (isUploadOpen) setIsUploadOpen(false);
+        if (selectedDocId) setSelectedDocId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileMenuOpen, isSettingsOpen, isUploadOpen, selectedDocId]);
 
   useEffect(() => {
     bootstrapApp();
@@ -129,6 +159,12 @@ export const App: React.FC = () => {
         chainVerified={chainVerification ? chainVerification.valid : null}
         isMobileOpen={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
+        activeCategory={activeNavCategory}
+        onSelectCategory={(cat) => {
+          setActiveNavCategory(cat as 'all' | 'my' | 'shared');
+          setActiveView('workspace');
+        }}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       {/* 2. White SaaS Workspace Area */}
@@ -187,6 +223,7 @@ export const App: React.FC = () => {
               refreshTrigger={refreshTrigger}
               externalSearch={globalSearch}
               onStatsUpdate={setVaultStats}
+              activeNavCategory={activeNavCategory}
             />
           ) : (
             <AdminConsole
@@ -204,6 +241,113 @@ export const App: React.FC = () => {
         onClose={() => setIsUploadOpen(false)}
         onSuccess={handleRefresh}
       />
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div
+          className="modal-overlay"
+          onClick={() => setIsSettingsOpen(false)}
+        >
+          <div
+            className="modal-dialog"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '480px' }}
+          >
+            <div className="modal-header">
+              <div className="modal-title-box">
+                <div className="modal-icon-badge">
+                  <Settings size={20} />
+                </div>
+                <div>
+                  <h3 className="modal-title">Settings & Identity</h3>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
+                    Evaluation persona and security configuration
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => setIsSettingsOpen(false)}
+                title="Close settings"
+                aria-label="Close settings"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label className="form-label">Active Persona Switcher</label>
+                <select
+                  className="input-field"
+                  value={currentUser?.id || ''}
+                  onChange={(e) => {
+                    handleSwitchUser(e.target.value);
+                    setIsSettingsOpen(false);
+                  }}
+                >
+                  {fixtures.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.displayName} ({f.role.replace('_', ' ')}) - {f.email}
+                    </option>
+                  ))}
+                </select>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.35rem' }}>
+                  Switches JWT bearer token to evaluate Zero-Trust authorization and access control.
+                </span>
+              </div>
+
+              <div className="modal-meta-grid" style={{ marginTop: '1rem', gridTemplateColumns: '1fr' }}>
+                <div>
+                  <span className="meta-label">Identity Role</span>
+                  <div style={{ marginTop: '0.25rem' }}>
+                    <span
+                      className={`badge ${
+                        currentUser?.role === 'administrator'
+                          ? 'badge-role-admin'
+                          : currentUser?.role === 'document_owner'
+                          ? 'badge-role-owner'
+                          : 'badge-role-viewer'
+                      }`}
+                    >
+                      {currentUser?.role?.replace('_', ' ') || 'None'}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <span className="meta-label">Account Status</span>
+                  <div style={{ marginTop: '0.25rem' }}>
+                    <span
+                      className={`badge ${
+                        currentUser?.isActive ? 'badge-status-active' : 'badge-status-inactive'
+                      }`}
+                    >
+                      {currentUser?.isActive ? 'Active' : 'Deactivated'}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <span className="meta-label">Audit Hash Chain</span>
+                  <span className="meta-value font-mono" style={{ fontSize: '0.8rem', color: 'var(--emerald-dark)' }}>
+                    SHA-256 Merkle Provenance Active
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setIsSettingsOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Document Details & Secure Sharing Modal */}
       <DocumentDetailsModal

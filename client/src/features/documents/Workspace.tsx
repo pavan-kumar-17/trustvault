@@ -33,6 +33,7 @@ interface WorkspaceProps {
   refreshTrigger: number;
   externalSearch?: string;
   onStatsUpdate?: (stats: { count: number; bytes: number }) => void;
+  activeNavCategory?: 'all' | 'my' | 'shared';
 }
 
 export const Workspace: React.FC<WorkspaceProps> = ({
@@ -42,6 +43,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
   refreshTrigger,
   externalSearch = '',
   onStatsUpdate,
+  activeNavCategory = 'all',
 }) => {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [total, setTotal] = useState<number>(0);
@@ -172,14 +174,30 @@ export const Workspace: React.FC<WorkspaceProps> = ({
     { id: 'general', name: 'General', count: categoryCounts['general'] || 0 },
   ];
 
+  const displayedDocuments = documents.filter((doc) => {
+    if (activeNavCategory === 'my') return doc.isOwner;
+    if (activeNavCategory === 'shared') return !doc.isOwner;
+    return true;
+  });
+
   return (
     <div className="documents-page">
       {/* 1. Page Header */}
       <div className="page-header-row">
         <div>
-          <h1 className="page-title">Documents</h1>
+          <h1 className="page-title">
+            {activeNavCategory === 'my'
+              ? 'My Documents'
+              : activeNavCategory === 'shared'
+              ? 'Shared Files'
+              : 'Documents'}
+          </h1>
           <p className="page-subtitle">
-            Secure Zero-Trust file repository. Explicit permissions and tamper-evident audit logging.
+            {activeNavCategory === 'my'
+              ? 'Viewing files uploaded and owned by your identity. Explicit Zero-Trust access.'
+              : activeNavCategory === 'shared'
+              ? 'Viewing documents securely shared with your account by other vault owners.'
+              : 'Secure Zero-Trust file repository. Explicit permissions and tamper-evident audit logging.'}
           </p>
         </div>
 
@@ -320,16 +338,26 @@ export const Workspace: React.FC<WorkspaceProps> = ({
                       {error}
                     </td>
                   </tr>
-                ) : documents.length === 0 ? (
+                ) : displayedDocuments.length === 0 ? (
                   <tr>
                     <td colSpan={7}>
                       <div className="empty-state-box">
                         <div className="empty-state-icon">
                           <Shield size={28} />
                         </div>
-                        <h4 className="empty-state-title">No Accessible Documents</h4>
+                        <h4 className="empty-state-title">
+                          {activeNavCategory === 'my'
+                            ? 'No Documents Owned'
+                            : activeNavCategory === 'shared'
+                            ? 'No Shared Documents'
+                            : 'No Accessible Documents'}
+                        </h4>
                         <p className="empty-state-desc">
-                          Under Zero-Trust rules, you only have visibility over documents you explicitly own or have been granted active permissions to view.
+                          {activeNavCategory === 'my'
+                            ? 'You have not uploaded any documents yet. Use the upload button above to add files.'
+                            : activeNavCategory === 'shared'
+                            ? 'No documents have been explicitly shared with your identity by other vault owners.'
+                            : 'Under Zero-Trust rules, you only have visibility over documents you explicitly own or have been granted active permissions to view.'}
                         </p>
                         {canUpload && (
                           <button className="btn btn-primary" onClick={onOpenUpload}>
@@ -341,7 +369,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
                     </td>
                   </tr>
                 ) : (
-                  documents.map((doc) => (
+                  displayedDocuments.map((doc) => (
                     <tr
                       key={doc.id}
                       onClick={() => onOpenDetails(doc.id)}
@@ -466,19 +494,29 @@ export const Workspace: React.FC<WorkspaceProps> = ({
             <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-dim)' }}>
               Loading documents grid...
             </div>
-          ) : documents.length === 0 ? (
+          ) : displayedDocuments.length === 0 ? (
             <div className="empty-state-box" style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
               <div className="empty-state-icon">
                 <Shield size={28} />
               </div>
-              <h4 className="empty-state-title">No Accessible Documents</h4>
+              <h4 className="empty-state-title">
+                {activeNavCategory === 'my'
+                  ? 'No Documents Owned'
+                  : activeNavCategory === 'shared'
+                  ? 'No Shared Documents'
+                  : 'No Accessible Documents'}
+              </h4>
               <p className="empty-state-desc">
-                Under Zero-Trust rules, you only have visibility over documents you explicitly own or have been granted active permissions to view.
+                {activeNavCategory === 'my'
+                  ? 'You have not uploaded any documents yet. Use the upload button above to add files.'
+                  : activeNavCategory === 'shared'
+                  ? 'No documents have been explicitly shared with your identity by other vault owners.'
+                  : 'Under Zero-Trust rules, you only have visibility over documents you explicitly own or have been granted active permissions to view.'}
               </p>
             </div>
           ) : (
             <div className="documents-grid">
-              {documents.map((doc) => (
+              {displayedDocuments.map((doc) => (
                 <div
                   key={doc.id}
                   className="grid-doc-card"

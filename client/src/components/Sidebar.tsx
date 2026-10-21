@@ -14,7 +14,10 @@ import {
   Layers,
   FileText,
   UserCheck,
-  X
+  X,
+  LayoutDashboard,
+  Share2,
+  Settings
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -30,6 +33,9 @@ interface SidebarProps {
   chainVerified: boolean | null;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
+  activeCategory?: string;
+  onSelectCategory?: (category: string) => void;
+  onOpenSettings?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -45,6 +51,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   chainVerified,
   isMobileOpen = false,
   onCloseMobile,
+  activeCategory = 'all',
+  onSelectCategory,
+  onOpenSettings,
 }) => {
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 KB';
@@ -74,7 +83,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className="brand-logo-wrap"
           onClick={() => {
             setActiveView('workspace');
+            onSelectCategory?.('all');
             onCloseMobile?.();
+          }}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              setActiveView('workspace');
+              onSelectCategory?.('all');
+              onCloseMobile?.();
+            }
           }}
         >
           <div className="brand-icon-box">
@@ -93,6 +112,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <div className="sidebar-brand-controls">
           <button
+            type="button"
             className="sidebar-toggle-btn desktop-only"
             onClick={() => setIsCollapsed(!isCollapsed)}
             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -102,12 +122,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
 
           <button
+            type="button"
             className="sidebar-close-btn mobile-only"
             onClick={onCloseMobile}
-            title="Close menu"
-            aria-label="Close menu"
+            title="Close navigation menu"
+            aria-label="Close navigation menu"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
       </div>
@@ -115,15 +136,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Navigation Links */}
       <nav className="sidebar-menu">
         <div className="sidebar-section">
-          {showExpanded && <span className="sidebar-section-title">WORKSPACE</span>}
+          {showExpanded && <span className="sidebar-section-title">VAULT REPOSITORY</span>}
           <div className="sidebar-links">
+            {/* 1. Dashboard */}
             <button
-              className={`sidebar-link ${activeView === 'workspace' ? 'active' : ''}`}
+              type="button"
+              className={`sidebar-link ${activeView === 'workspace' && activeCategory === 'all' ? 'active' : ''}`}
               onClick={() => {
                 setActiveView('workspace');
+                onSelectCategory?.('all');
                 onCloseMobile?.();
               }}
-              title="Documents & Files"
+              title="Vault Dashboard Overview"
+            >
+              <LayoutDashboard size={18} className="link-icon" />
+              {showExpanded && <span className="link-label">Dashboard</span>}
+            </button>
+
+            {/* 2. My Documents */}
+            <button
+              type="button"
+              className={`sidebar-link ${activeView === 'workspace' && activeCategory === 'my' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveView('workspace');
+                onSelectCategory?.('my');
+                onCloseMobile?.();
+              }}
+              title="My Documents & Uploads"
             >
               <Files size={18} className="link-icon" />
               {showExpanded && (
@@ -135,25 +174,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </>
               )}
             </button>
+
+            {/* 3. Shared Files */}
+            <button
+              type="button"
+              className={`sidebar-link ${activeView === 'workspace' && activeCategory === 'shared' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveView('workspace');
+                onSelectCategory?.('shared');
+                onCloseMobile?.();
+              }}
+              title="Shared Files & Permissions"
+            >
+              <Share2 size={18} className="link-icon" />
+              {showExpanded && (
+                <>
+                  <span className="link-label">Shared Files</span>
+                  <span
+                    className="role-tag"
+                    style={{
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      color: '#93c5fd',
+                      border: '1px solid rgba(59, 130, 246, 0.35)',
+                    }}
+                  >
+                    Shared
+                  </span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 
+        {/* 4. Governance & Security */}
         <div className="sidebar-section">
-          {showExpanded && <span className="sidebar-section-title">GOVERNANCE & SECURITY</span>}
+          {showExpanded && <span className="sidebar-section-title">SECURITY & AUDIT</span>}
           <div className="sidebar-links">
             {currentUser?.role === 'administrator' ? (
               <button
+                type="button"
                 className={`sidebar-link ${activeView === 'admin' ? 'active' : ''}`}
                 onClick={() => {
                   setActiveView('admin');
                   onCloseMobile?.();
                 }}
-                title="Administrator Console"
+                title="Security Activity & Cryptographic Audit Trail"
               >
-                <ShieldCheck size={18} className="link-icon" />
+                <Activity size={18} className="link-icon" />
                 {showExpanded && (
                   <>
-                    <span className="link-label">Admin Console</span>
+                    <span className="link-label">Security Activity</span>
                     <span className="role-tag admin">Admin</span>
                   </>
                 )}
@@ -161,17 +231,50 @@ export const Sidebar: React.FC<SidebarProps> = ({
             ) : (
               <div
                 className="sidebar-link disabled"
-                title="Switch to Alice Admin to manage access governance"
+                title="Switch to Alice Admin to inspect security activity"
               >
                 <Lock size={18} className="link-icon text-muted" />
                 {showExpanded && (
                   <>
-                    <span className="link-label text-muted">Admin Console</span>
+                    <span className="link-label text-muted">Security Activity</span>
                     <span className="role-tag locked">Restricted</span>
                   </>
                 )}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* 5. Preferences & Settings */}
+        <div className="sidebar-section">
+          {showExpanded && <span className="sidebar-section-title">PREFERENCES</span>}
+          <div className="sidebar-links">
+            <button
+              type="button"
+              className="sidebar-link"
+              onClick={() => {
+                onOpenSettings?.();
+                onCloseMobile?.();
+              }}
+              title="Persona & Security Settings"
+            >
+              <Settings size={18} className="link-icon" />
+              {showExpanded && (
+                <>
+                  <span className="link-label">Settings</span>
+                  <span
+                    className="role-tag"
+                    style={{
+                      background: 'rgba(148, 163, 184, 0.15)',
+                      color: '#cbd5e1',
+                      border: '1px solid rgba(148, 163, 184, 0.25)',
+                    }}
+                  >
+                    Profile
+                  </span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </nav>
