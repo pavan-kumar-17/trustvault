@@ -17,7 +17,8 @@ import {
   X,
   LayoutDashboard,
   Share2,
-  Settings
+  Settings,
+  LogOut,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -36,6 +37,7 @@ interface SidebarProps {
   activeCategory?: string;
   onSelectCategory?: (category: string) => void;
   onOpenSettings?: () => void;
+  onSignOut?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -275,6 +277,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </>
               )}
             </button>
+
+            {onSignOut && (
+              <button
+                type="button"
+                className="sidebar-link"
+                onClick={() => {
+                  onCloseMobile?.();
+                  onSignOut();
+                }}
+                title="Sign Out of TrustVault"
+                style={{ color: '#f43f5e', marginTop: '0.25rem' }}
+              >
+                <LogOut size={18} className="link-icon" style={{ color: '#f43f5e' }} />
+                {showExpanded && <span className="link-label">Sign Out</span>}
+              </button>
+            )}
           </div>
         </div>
       </nav>

@@ -58,3 +58,63 @@ export const AdminAuditQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
+
+// Authentication & Registration Schemas
+export const LoginSchema = z.object({
+  email: z.string().trim().email('Please enter a valid work email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+export const RegisterSchema = z
+  .object({
+    fullName: z
+      .string()
+      .trim()
+      .min(2, 'Full Name is required (minimum 2 characters)')
+      .max(100, 'Full Name is too long'),
+    email: z.string().trim().email('Please enter a valid work email address'),
+    dateOfBirth: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date of Birth must be in YYYY-MM-DD format'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(
+        /^(?=.*[A-Za-z])(?=.*\d)/,
+        'Password must contain both letters and numbers'
+      ),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    requestedAccountType: z.enum(['viewer', 'document_owner']),
+    agreeTerms: z.boolean().refine((val) => val === true, {
+      message: 'You must agree to the Terms & Conditions and Privacy Policy',
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords must match',
+    path: ['confirmPassword'],
+  });
+
+export const VerifyEmailSchema = z.object({
+  email: z.string().trim().email('Please enter a valid email address'),
+  code: z.string().trim().min(4, 'Code must be at least 4 digits').max(10),
+});
+
+export const ResendVerificationSchema = z.object({
+  email: z.string().trim().email('Please enter a valid email address'),
+});
+
+export const ForgotPasswordSchema = z.object({
+  email: z.string().trim().email('Please enter a valid email address'),
+});
+
+export const ResetPasswordSchema = z.object({
+  token: z.string().trim().min(10, 'Invalid reset token'),
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(
+      /^(?=.*[A-Za-z])(?=.*\d)/,
+      'Password must contain both letters and numbers'
+    ),
+});
+

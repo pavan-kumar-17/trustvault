@@ -7,6 +7,8 @@ export interface UserProfile {
   displayName: string;
   role: Role;
   isActive: boolean;
+  requestedRole?: Role;
+  roleApprovalStatus?: 'approved' | 'pending' | 'none';
 }
 
 export interface DocumentItem {

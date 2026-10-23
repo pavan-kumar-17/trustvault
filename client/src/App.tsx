@@ -7,13 +7,19 @@ import { Workspace } from './features/documents/Workspace.js';
 import { UploadModal } from './features/documents/UploadModal.js';
 import { DocumentDetailsModal } from './features/documents/DocumentDetailsModal.js';
 import { AdminConsole } from './features/admin/AdminConsole.js';
-import { ShieldAlert, RefreshCw, Settings } from 'lucide-react';
+import { SignInPage } from './features/auth/SignInPage.js';
+import { RegisterPage } from './features/auth/RegisterPage.js';
+import { ShieldAlert, RefreshCw, Settings, ShieldCheck } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [fixtures, setFixtures] = useState<FixturePersona[]>([]);
   const [activeView, setActiveView] = useState<'workspace' | 'admin'>('workspace');
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
+
+  // Authentication subroute state ('signin' | 'register')
+  const [authRoute, setAuthRoute] = useState<'signin' | 'register'>('signin');
 
   // Active navigation category ('all' | 'my' | 'shared')
   const [activeNavCategory, setActiveNavCategory] = useState<'all' | 'my' | 'shared'>('all');
@@ -42,6 +48,37 @@ export const App: React.FC = () => {
     checkedCount: number;
   } | null>(null);
   const [isVerifyingChain, setIsVerifyingChain] = useState<boolean>(false);
+
+  // Synchronize route with current browser URL path
+  const syncRouteFromLocation = () => {
+    const path = window.location.pathname.toLowerCase();
+    if (path === '/register' || path === '/signup') {
+      setAuthRoute('register');
+    } else if (path === '/admin') {
+      setActiveView('admin');
+      setAuthRoute('signin');
+    } else {
+      setAuthRoute('signin');
+      setActiveView('workspace');
+    }
+  };
+
+  const navigateTo = (path: string) => {
+    window.history.pushState({}, '', path);
+    syncRouteFromLocation();
+  };
+
+  // Listen to browser Back and Forward navigation
+  useEffect(() => {
+    syncRouteFromLocation();
+
+    const handlePopState = () => {
+      syncRouteFromLocation();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Prevent background scrolling while mobile drawer is open
   useEffect(() => {
@@ -79,27 +116,39 @@ export const App: React.FC = () => {
       setFixtures(fixtureList);
 
       const existingToken = authStorage.getToken();
-      if (!existingToken) {
-        const defaultAdmin = fixtureList[0];
-        if (defaultAdmin) {
-          const authData = await api.demoLogin(defaultAdmin.id);
-          setCurrentUser(authData.user);
-        }
-      } else {
+      if (existingToken) {
         try {
           const me = await api.getMe();
-          setCurrentUser(me.user);
-        } catch {
-          const defaultAdmin = fixtureList[0];
-          if (defaultAdmin) {
-            const authData = await api.demoLogin(defaultAdmin.id);
-            setCurrentUser(authData.user);
+          if (me.user && me.user.isActive) {
+            setCurrentUser(me.user);
+          } else {
+            authStorage.clearToken();
+            setCurrentUser(null);
           }
+        } catch {
+          authStorage.clearToken();
+          setCurrentUser(null);
         }
+      } else {
+        setCurrentUser(null);
       }
     } catch (err) {
       console.error('Failed to initialize app:', err);
+      setCurrentUser(null);
+    } finally {
+      setIsInitializing(false);
     }
+  };
+
+  const handleAuthSuccess = (user: UserProfile) => {
+    setCurrentUser(user);
+    navigateTo('/');
+  };
+
+  const handleSignOut = () => {
+    api.logout();
+    setCurrentUser(null);
+    navigateTo('/login');
   };
 
   const handleSwitchUser = async (userId: string) => {
@@ -132,6 +181,62 @@ export const App: React.FC = () => {
     }
   };
 
+  // Initial loading screen while verifying session
+  if (isInitializing) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          background: 'var(--workspace-bg)',
+          gap: '1rem',
+        }}
+      >
+        <div
+          style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '12px',
+            background: '#eff6ff',
+            border: '1px solid #dbeafe',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <ShieldCheck size={28} color="#2563eb" />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#475569', fontSize: '0.9rem' }}>
+          <span className="auth-btn-spinner" style={{ borderColor: '#cbd5e1', borderTopColor: '#2563eb' }} />
+          <span>Verifying TrustVault session...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Unauthenticated State: Render Sign In or Register Pages
+  if (!currentUser) {
+    if (authRoute === 'register') {
+      return (
+        <RegisterPage
+          onSuccess={handleAuthSuccess}
+          onNavigateToSignIn={() => navigateTo('/login')}
+        />
+      );
+    }
+
+    return (
+      <SignInPage
+        onSuccess={handleAuthSuccess}
+        onNavigateToRegister={() => navigateTo('/register')}
+      />
+    );
+  }
+
+  // Authenticated State: Protected Workspace & Admin Console
   return (
     <div className="app-shell">
       {/* Mobile Drawer Backdrop */}
@@ -165,6 +270,7 @@ export const App: React.FC = () => {
           setActiveView('workspace');
         }}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onSignOut={handleSignOut}
       />
 
       {/* 2. White SaaS Workspace Area */}
@@ -182,6 +288,7 @@ export const App: React.FC = () => {
           onVerifyChain={handleVerifyChain}
           isVerifyingChain={isVerifyingChain}
           chainVerification={chainVerification}
+          onSignOut={handleSignOut}
         />
 
         {/* Main Content View */}
@@ -335,10 +442,21 @@ export const App: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
+                  onClick={() => {
+                    setIsSettingsOpen(false);
+                    handleSignOut();
+                  }}
+                  style={{ color: 'var(--color-rose)', borderColor: 'var(--color-rose-border)' }}
+                >
+                  Sign Out
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
                   onClick={() => setIsSettingsOpen(false)}
                 >
                   Close

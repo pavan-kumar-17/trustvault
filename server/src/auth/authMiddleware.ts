@@ -25,11 +25,58 @@ export interface UserProfileRecord {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  dateOfBirth?: string;
+  requestedRole?: Role;
+  roleApprovalStatus?: 'approved' | 'pending' | 'none';
+  isEmailVerified: boolean;
+  passwordHash?: string;
+  salt?: string;
+  resetToken?: string;
+  resetTokenExpiry?: Date;
+  verificationCode?: string;
 }
+
+export function hashPassword(password: string, salt: string): string {
+  return crypto.scryptSync(password, salt, 64).toString('hex');
+}
+
+export function generateSalt(): string {
+  return crypto.randomBytes(16).toString('hex');
+}
+
+export function verifyPassword(password: string, salt: string, hash: string): boolean {
+  try {
+    const calculated = crypto.scryptSync(password, salt, 64).toString('hex');
+    return crypto.timingSafeEqual(Buffer.from(calculated, 'hex'), Buffer.from(hash, 'hex'));
+  } catch {
+    return false;
+  }
+}
+
+export function calculateAge(dobString: string): number {
+  const parts = dobString.split('-');
+  if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) return -1;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return -1;
+
+  const today = new Date();
+  let age = today.getFullYear() - year;
+  const currentMonth = today.getMonth() + 1;
+  const currentDay = today.getDate();
+
+  if (currentMonth < month || (currentMonth === month && currentDay < day)) {
+    age--;
+  }
+  return age;
+}
+
+const DEFAULT_DEMO_PASSWORD = 'TrustVault2026!';
 
 /**
  * In-memory repository of profiles to support local testing, seed fixtures,
- * and immediate response to activation/deactivation changes.
+ * registration, authentication, and immediate response to activation/deactivation changes.
  */
 class UserRepository {
   private profiles = new Map<string, UserProfileRecord>();
@@ -40,13 +87,21 @@ class UserRepository {
 
   public seedDefaultUsers(): void {
     this.profiles.clear();
+    const defaultSalt = generateSalt();
+    const defaultHash = hashPassword(DEFAULT_DEMO_PASSWORD, defaultSalt);
+
     const defaults: UserProfileRecord[] = [
       {
         id: '11111111-1111-4111-8111-111111111111',
         email: 'admin@trustvault.local',
         displayName: 'Alice Admin',
         role: 'administrator',
+        requestedRole: 'administrator',
+        roleApprovalStatus: 'approved',
+        isEmailVerified: true,
         isActive: true,
+        salt: defaultSalt,
+        passwordHash: defaultHash,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -55,7 +110,12 @@ class UserRepository {
         email: 'ownera@trustvault.local',
         displayName: 'Oscar Owner A',
         role: 'document_owner',
+        requestedRole: 'document_owner',
+        roleApprovalStatus: 'approved',
+        isEmailVerified: true,
         isActive: true,
+        salt: defaultSalt,
+        passwordHash: defaultHash,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -64,7 +124,12 @@ class UserRepository {
         email: 'ownerb@trustvault.local',
         displayName: 'Bob Owner B',
         role: 'document_owner',
+        requestedRole: 'document_owner',
+        roleApprovalStatus: 'approved',
+        isEmailVerified: true,
         isActive: true,
+        salt: defaultSalt,
+        passwordHash: defaultHash,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -73,7 +138,12 @@ class UserRepository {
         email: 'viewera@trustvault.local',
         displayName: 'Victor Viewer A',
         role: 'viewer',
+        requestedRole: 'viewer',
+        roleApprovalStatus: 'approved',
+        isEmailVerified: true,
         isActive: true,
+        salt: defaultSalt,
+        passwordHash: defaultHash,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -82,7 +152,12 @@ class UserRepository {
         email: 'viewerb@trustvault.local',
         displayName: 'Vera Viewer B',
         role: 'viewer',
+        requestedRole: 'viewer',
+        roleApprovalStatus: 'approved',
+        isEmailVerified: true,
         isActive: true,
+        salt: defaultSalt,
+        passwordHash: defaultHash,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -91,7 +166,12 @@ class UserRepository {
         email: 'inactive@trustvault.local',
         displayName: 'Ian Inactive',
         role: 'viewer',
+        requestedRole: 'viewer',
+        roleApprovalStatus: 'approved',
+        isEmailVerified: true,
         isActive: false, // Inactive fixture
+        salt: defaultSalt,
+        passwordHash: defaultHash,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -102,6 +182,13 @@ class UserRepository {
 
   public getById(id: string): UserProfileRecord | undefined {
     return this.profiles.get(id);
+  }
+
+  public getByEmail(email: string): UserProfileRecord | undefined {
+    const normalized = email.trim().toLowerCase();
+    return Array.from(this.profiles.values()).find(
+      (u) => u.email.toLowerCase() === normalized
+    );
   }
 
   public getAll(): UserProfileRecord[] {
@@ -115,17 +202,177 @@ class UserRepository {
     user.updatedAt = new Date();
     return user;
   }
+
+  public createUser(params: {
+    displayName: string;
+    email: string;
+    password: string;
+    dateOfBirth: string;
+    requestedAccountType: 'viewer' | 'document_owner';
+  }): UserProfileRecord {
+    const normalizedEmail = params.email.trim().toLowerCase();
+
+    // Check unique email
+    if (this.getByEmail(normalizedEmail)) {
+      const err = new Error('An account with this email address already exists');
+      (err as any).statusCode = 409;
+      throw err;
+    }
+
+    // Server-side age validation: must be at least 13
+    const age = calculateAge(params.dateOfBirth);
+    if (age < 13) {
+      const err = new Error('TrustVault requires users to be at least 13 years old to register');
+      (err as any).statusCode = 400;
+      throw err;
+    }
+
+    const salt = generateSalt();
+    const passwordHash = hashPassword(params.password, salt);
+    const id = crypto.randomUUID();
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Zero-Trust Rule: Public users can NEVER register as administrator.
+    // Document Owner requires approval, so initial active role is always 'viewer'
+    const isOwnerRequest = params.requestedAccountType === 'document_owner';
+    const role: Role = 'viewer';
+    const requestedRole: Role = isOwnerRequest ? 'document_owner' : 'viewer';
+    const roleApprovalStatus: 'approved' | 'pending' = isOwnerRequest ? 'pending' : 'approved';
+
+    const user: UserProfileRecord = {
+      id,
+      email: normalizedEmail,
+      displayName: params.displayName.trim(),
+      role,
+      requestedRole,
+      roleApprovalStatus,
+      dateOfBirth: params.dateOfBirth,
+      isActive: true,
+      isEmailVerified: false,
+      verificationCode,
+      passwordHash,
+      salt,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    this.profiles.set(id, user);
+    return user;
+  }
+
+  public authenticate(
+    email: string,
+    password: string
+  ): {
+    user?: UserProfileRecord;
+    error?: string;
+    statusCode?: number;
+    unverified?: boolean;
+  } {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = this.getByEmail(normalizedEmail);
+
+    if (!user || !user.salt || !user.passwordHash) {
+      return { error: 'Invalid email or password', statusCode: 401 };
+    }
+
+    const isValid = verifyPassword(password, user.salt, user.passwordHash);
+    if (!isValid) {
+      return { error: 'Invalid email or password', statusCode: 401 };
+    }
+
+    if (!user.isActive) {
+      return {
+        error: 'Account is deactivated. Please contact your security administrator.',
+        statusCode: 403,
+      };
+    }
+
+    if (!user.isEmailVerified) {
+      return {
+        error: 'Email address has not been verified. Please verify your email before signing in.',
+        statusCode: 403,
+        unverified: true,
+        user,
+      };
+    }
+
+    return { user };
+  }
+
+  public verifyEmail(
+    email: string,
+    code: string
+  ): { success: boolean; user?: UserProfileRecord; error?: string } {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = this.getByEmail(normalizedEmail);
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+    if (user.isEmailVerified) {
+      return { success: true, user };
+    }
+    if (user.verificationCode !== code.trim()) {
+      return { success: false, error: 'Invalid verification code' };
+    }
+    user.isEmailVerified = true;
+    user.verificationCode = undefined;
+    user.updatedAt = new Date();
+    return { success: true, user };
+  }
+
+  public resendVerification(email: string): { success: boolean; code?: string; error?: string } {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = this.getByEmail(normalizedEmail);
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+    if (user.isEmailVerified) {
+      return { success: false, error: 'Email is already verified' };
+    }
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    user.verificationCode = code;
+    user.updatedAt = new Date();
+    return { success: true, code };
+  }
+
+  public requestPasswordReset(email: string): { success: boolean; token?: string } {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = this.getByEmail(normalizedEmail);
+    if (!user) {
+      // Avoid revealing user existence
+      return { success: true };
+    }
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetToken = resetToken;
+    user.resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
+    user.updatedAt = new Date();
+    return { success: true, token: resetToken };
+  }
+
+  public resetPassword(token: string, newPassword: string): { success: boolean; error?: string } {
+    const user = Array.from(this.profiles.values()).find(
+      (u) => u.resetToken === token && u.resetTokenExpiry && u.resetTokenExpiry > new Date()
+    );
+    if (!user) {
+      return { success: false, error: 'Invalid or expired password reset token' };
+    }
+    const salt = generateSalt();
+    user.salt = salt;
+    user.passwordHash = hashPassword(newPassword, salt);
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
+    user.updatedAt = new Date();
+    return { success: true };
+  }
 }
 
 export const userRepository = new UserRepository();
 
 /**
- * Issues JWT for a given user fixture (used for demo and tests).
+ * Issues JWT for a given user profile.
  */
-export function issueTestToken(userId: string): string {
-  const user = userRepository.getById(userId);
-  if (!user) throw new Error(`Cannot issue token: user ${userId} not found`);
-
+export function issueToken(user: UserProfileRecord): string {
   return jwt.sign(
     {
       sub: user.id,
@@ -133,9 +380,19 @@ export function issueTestToken(userId: string): string {
       role: user.role,
     },
     env.JWT_SECRET,
-    { expiresIn: '1h' }
+    { expiresIn: '8h' }
   );
 }
+
+/**
+ * Issues JWT for a given user fixture (used for demo and tests).
+ */
+export function issueTestToken(userId: string): string {
+  const user = userRepository.getById(userId);
+  if (!user) throw new Error(`Cannot issue token: user ${userId} not found`);
+  return issueToken(user);
+}
+
 
 /**
  * Middleware: assigns a unique correlation request ID to each request.

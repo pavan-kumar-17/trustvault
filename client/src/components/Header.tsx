@@ -11,7 +11,8 @@ import {
   ChevronDown,
   Layers,
   ShieldAlert,
-  Check
+  Check,
+  LogOut,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -26,6 +27,7 @@ interface HeaderProps {
   onVerifyChain: () => void;
   isVerifyingChain: boolean;
   chainVerification: { valid: boolean; checkedCount: number } | null;
+  onSignOut?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -275,6 +277,25 @@ export const Header: React.FC<HeaderProps> = ({
                     <ShieldCheck size={14} />
                     <span>Administrator Console</span>
                     {activeView === 'admin' && <Check size={14} className="ml-auto" />}
+                  </button>
+                )}
+
+                {onSignOut && (
+                  <button
+                    className="popover-nav-btn"
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      onSignOut();
+                    }}
+                    style={{
+                      color: 'var(--color-rose)',
+                      marginTop: '0.4rem',
+                      borderTop: '1px solid var(--border-subtle)',
+                      paddingTop: '0.6rem',
+                    }}
+                  >
+                    <LogOut size={14} />
+                    <span>Sign Out</span>
                   </button>
                 )}
               </div>

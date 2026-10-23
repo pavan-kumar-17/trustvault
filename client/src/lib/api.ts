@@ -63,6 +63,94 @@ export const api = {
     return apiFetch<{ fixtures: FixturePersona[] }>('/api/auth/fixtures');
   },
 
+  async login(credentials: { email: string; password: string }): Promise<{ token: string; user: UserProfile }> {
+    const data = await apiFetch<{ token: string; user: UserProfile }>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+    authStorage.setToken(data.token);
+    return data;
+  },
+
+  async register(payload: {
+    fullName: string;
+    email: string;
+    dateOfBirth: string;
+    password: string;
+    confirmPassword: string;
+    requestedAccountType: 'viewer' | 'document_owner';
+    agreeTerms: boolean;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    requiresEmailVerification: boolean;
+    email: string;
+    verificationCode?: string;
+    user: UserProfile;
+  }> {
+    return apiFetch('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async verifyEmail(payload: { email: string; code: string }): Promise<{
+    success: boolean;
+    message: string;
+    token: string;
+    user: UserProfile;
+  }> {
+    const data = await apiFetch<{
+      success: boolean;
+      message: string;
+      token: string;
+      user: UserProfile;
+    }>('/api/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (data.token) {
+      authStorage.setToken(data.token);
+    }
+    return data;
+  },
+
+  async resendVerification(payload: { email: string }): Promise<{
+    success: boolean;
+    message: string;
+    code?: string;
+  }> {
+    return apiFetch('/api/auth/resend-verification', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async forgotPassword(payload: { email: string }): Promise<{
+    success: boolean;
+    message: string;
+    resetToken?: string;
+  }> {
+    return apiFetch('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async resetPassword(payload: { token: string; newPassword: string }): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    return apiFetch('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  logout(): void {
+    authStorage.clearToken();
+  },
+
   async demoLogin(userId: string): Promise<{ token: string; user: UserProfile }> {
     const data = await apiFetch<{ token: string; user: UserProfile }>('/api/auth/demo-login', {
       method: 'POST',
@@ -75,6 +163,7 @@ export const api = {
   async getMe(): Promise<{ user: UserProfile }> {
     return apiFetch<{ user: UserProfile }>('/api/me');
   },
+
 
   // Documents
   async getDocuments(params: {

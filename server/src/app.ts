@@ -7,6 +7,7 @@ import { env } from './config/env.js';
 import { assignRequestId } from './auth/authMiddleware.js';
 import { documentRouter } from './documents/documentRoutes.js';
 import { adminRouter } from './admin/adminRoutes.js';
+import { authRouter } from './auth/authRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -54,6 +55,7 @@ export function createApp(): Express {
   });
 
   // 6. Mount API Routes
+  app.use('/api/auth', authRouter);
   app.use('/api', documentRouter);
   app.use('/api', adminRouter);
 
