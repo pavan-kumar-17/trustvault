@@ -73,9 +73,16 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, Error
             <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.75rem' }}>
               TrustVault Security Recovery
             </h2>
-            <p style={{ fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5, marginBottom: '1.5rem' }}>
+            <p style={{ fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5, marginBottom: '1.25rem' }}>
               The application encountered an unexpected runtime exception. Click below to safely reset local state and reload the portal.
             </p>
+            {this.state.error && (
+              <div style={{ background: '#0f172a', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #334155', marginBottom: '1.25rem', textAlign: 'left' }}>
+                <span style={{ fontSize: '0.72rem', color: '#f87171', fontFamily: 'monospace', display: 'block', wordBreak: 'break-all' }}>
+                  {this.state.error.message}
+                </span>
+              </div>
+            )}
             <button
               onClick={this.handleReset}
               style={{

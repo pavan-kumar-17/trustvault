@@ -56,6 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeCategory = 'all',
   onSelectCategory,
   onOpenSettings,
+  onSignOut,
 }) => {
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 KB';

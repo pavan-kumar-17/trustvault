@@ -42,6 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
   onVerifyChain,
   isVerifyingChain,
   chainVerification,
+  onSignOut,
 }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
