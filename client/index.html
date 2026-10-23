@@ -11,8 +11,23 @@
       rel="stylesheet"
     />
   </head>
-  <body>
-    <div id="root"></div>
+  <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Outfit', system-ui, sans-serif;">
+    <div id="root">
+      <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #f8fafc; gap: 1rem;">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: #eff6ff; border: 1px solid #dbeafe; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+          🛡️
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.6rem; color: #475569; font-size: 0.9rem; font-weight: 500;">
+          <span>Loading TrustVault Enterprise Portal...</span>
+        </div>
+      </div>
+    </div>
+    <noscript>
+      <div style="padding: 2rem; text-align: center; color: #0f172a; font-family: sans-serif;">
+        <h2>JavaScript Required</h2>
+        <p>TrustVault Zero-Trust Document Portal requires JavaScript to operate securely.</p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

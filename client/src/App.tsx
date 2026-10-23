@@ -11,12 +11,22 @@ import { SignInPage } from './features/auth/SignInPage.js';
 import { RegisterPage } from './features/auth/RegisterPage.js';
 import { ShieldAlert, RefreshCw, Settings, ShieldCheck } from 'lucide-react';
 
+const DEFAULT_FIXTURES: FixturePersona[] = [
+  { id: 'usr-1', email: 'admin@trustvault.local', displayName: 'Alice (Security Admin)', role: 'administrator', isActive: true },
+  { id: 'usr-2', email: 'owner@trustvault.local', displayName: 'Oscar (Document Owner)', role: 'document_owner', isActive: true },
+  { id: 'usr-3', email: 'viewer@trustvault.local', displayName: 'Victor (Compliance Viewer)', role: 'viewer', isActive: true },
+  { id: 'usr-4', email: 'inactive@trustvault.local', displayName: 'Ian (Deactivated Employee)', role: 'viewer', isActive: false },
+];
+
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [fixtures, setFixtures] = useState<FixturePersona[]>([]);
+  const [fixtures, setFixtures] = useState<FixturePersona[]>(DEFAULT_FIXTURES);
   const [activeView, setActiveView] = useState<'workspace' | 'admin'>('workspace');
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
-  const [isInitializing, setIsInitializing] = useState<boolean>(true);
+  const [isInitializing, setIsInitializing] = useState<boolean>(() => {
+    // Only show initializing screen if an existing token needs validation
+    return Boolean(authStorage.getToken());
+  });
 
   // Authentication subroute state ('signin' | 'register')
   const [authRoute, setAuthRoute] = useState<'signin' | 'register'>('signin');
@@ -111,29 +121,39 @@ export const App: React.FC = () => {
   }, []);
 
   const bootstrapApp = async () => {
-    try {
-      const { fixtures: fixtureList } = await api.getFixtures();
-      setFixtures(fixtureList);
-
-      const existingToken = authStorage.getToken();
-      if (existingToken) {
-        try {
-          const me = await api.getMe();
-          if (me.user && me.user.isActive) {
-            setCurrentUser(me.user);
-          } else {
-            authStorage.clearToken();
-            setCurrentUser(null);
-          }
-        } catch {
-          authStorage.clearToken();
-          setCurrentUser(null);
+    // 1. Fetch live fixtures in background without blocking initial render
+    api.getFixtures()
+      .then(({ fixtures: fixtureList }) => {
+        if (fixtureList && fixtureList.length > 0) {
+          setFixtures(fixtureList);
         }
+      })
+      .catch((err) => {
+        console.warn('Could not refresh fixture personas from API, using defaults:', err);
+      });
+
+    // 2. If an existing token exists, verify with 2500ms timeout guard
+    const existingToken = authStorage.getToken();
+    if (!existingToken) {
+      setCurrentUser(null);
+      setIsInitializing(false);
+      return;
+    }
+
+    try {
+      const timeoutPromise = new Promise<{ user: null }>((_, reject) =>
+        setTimeout(() => reject(new Error('Session verification timeout')), 2500)
+      );
+
+      const me = await Promise.race([api.getMe(), timeoutPromise]);
+      if (me.user && me.user.isActive) {
+        setCurrentUser(me.user);
       } else {
+        authStorage.clearToken();
         setCurrentUser(null);
       }
-    } catch (err) {
-      console.error('Failed to initialize app:', err);
+    } catch {
+      authStorage.clearToken();
       setCurrentUser(null);
     } finally {
       setIsInitializing(false);

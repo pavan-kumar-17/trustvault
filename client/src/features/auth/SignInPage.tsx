@@ -85,40 +85,85 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
   return (
     <div className="auth-page-shell">
-      {/* Background Decor & Top Protocol Features (from Screenshot 1) */}
-      <div className="auth-features-section">
-        <div className="auth-feature-card">
-          <div className="auth-feature-icon-wrap">
-            <FileText size={20} className="auth-feature-icon" />
-          </div>
-          <div className="auth-feature-content">
-            <h4 className="auth-feature-title">Granular Per-Document ACLs</h4>
-            <p className="auth-feature-desc">
-              Owners grant explicit Read or Edit access to named collaborators with live database-level validation.
+      <div className="auth-responsive-layout">
+        {/* Left Column on Desktop / Top Features Section on Mobile */}
+        <div className="auth-features-section">
+          {/* Desktop Hero Branding (visible on desktop >= 1024px) */}
+          <div className="auth-desktop-hero desktop-only">
+            <div className="auth-desktop-badge">
+              <ShieldCheck size={16} />
+              <span>Enterprise Document Governance • Zero-Trust Protocol</span>
+            </div>
+            <h2 className="auth-desktop-title">
+              Zero-Trust Document Security & Cryptographic Compliance
+            </h2>
+            <p className="auth-desktop-subtitle">
+              Secure corporate document sharing with database-level ACL enforcement, immediate grant revocation, and tamper-evident SHA-256 audit trails.
             </p>
           </div>
-        </div>
 
-        <div className="auth-feature-card">
-          <div className="auth-feature-icon-wrap">
-            <Activity size={20} className="auth-feature-icon" />
+          <div className="auth-feature-card">
+            <div className="auth-feature-icon-wrap">
+              <FileText size={20} className="auth-feature-icon" />
+            </div>
+            <div className="auth-feature-content">
+              <h4 className="auth-feature-title">Granular Per-Document ACLs</h4>
+              <p className="auth-feature-desc">
+                Owners grant explicit Read or Edit access to named collaborators with live database-level validation.
+              </p>
+            </div>
           </div>
-          <div className="auth-feature-content">
-            <h4 className="auth-feature-title">Immutable Audit Trail</h4>
-            <p className="auth-feature-desc">
-              Append-only compliance logging records every read, stream download, modification, and refused attempt.
-            </p>
+
+          <div className="auth-feature-card">
+            <div className="auth-feature-icon-wrap">
+              <Activity size={20} className="auth-feature-icon" />
+            </div>
+            <div className="auth-feature-content">
+              <h4 className="auth-feature-title">Immutable Audit Trail</h4>
+              <p className="auth-feature-desc">
+                Append-only compliance logging records every read, stream download, modification, and refused attempt.
+              </p>
+            </div>
+          </div>
+
+          {/* Third feature card visible on desktop */}
+          <div className="auth-feature-card desktop-only">
+            <div className="auth-feature-icon-wrap" style={{ background: '#ecfdf5', color: '#10b981' }}>
+              <ShieldCheck size={20} />
+            </div>
+            <div className="auth-feature-content">
+              <h4 className="auth-feature-title">Immediate Revocation</h4>
+              <p className="auth-feature-desc">
+                Access policy modifications take effect instantaneously on subsequent API requests with zero caching delay.
+              </p>
+            </div>
+          </div>
+
+          {/* Protocol divider visible on mobile */}
+          <div className="auth-protocol-divider mobile-only">
+            <Shield size={14} className="auth-protocol-shield" />
+            <span>Enterprise Document Management • Verified Zero-Trust Protocol</span>
+          </div>
+
+          {/* Desktop trust badges */}
+          <div className="auth-desktop-trust-pills desktop-only">
+            <div className="auth-trust-pill">
+              <ShieldCheck size={14} className="auth-pill-icon" />
+              <span>Zero-Trust Architecture</span>
+            </div>
+            <div className="auth-trust-pill">
+              <Award size={14} className="auth-pill-icon" />
+              <span>SOC2 & ISO 27001 Ready</span>
+            </div>
+            <div className="auth-trust-pill">
+              <Zap size={14} className="auth-pill-icon text-emerald" />
+              <span>SHA-256 Provenance</span>
+            </div>
           </div>
         </div>
 
-        <div className="auth-protocol-divider">
-          <Shield size={14} className="auth-protocol-shield" />
-          <span>Enterprise Document Management • Verified Zero-Trust Protocol</span>
-        </div>
-      </div>
-
-      {/* Main Sign-In Card (from Screenshot 1) */}
-      <div className="auth-card-wrap">
+        {/* Main Sign-In Card (from Screenshot 1) */}
+        <div className="auth-card-wrap">
         <div className="auth-card">
           {/* Brand Header */}
           <div className="auth-card-brand">
@@ -324,6 +369,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Modals */}

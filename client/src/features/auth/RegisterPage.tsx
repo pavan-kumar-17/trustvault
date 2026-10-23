@@ -17,6 +17,9 @@ import {
   Shield,
   Clock,
   Sparkles,
+  FileText,
+  Activity,
+  Zap,
 } from 'lucide-react';
 import { TermsModal, PrivacyModal, VerifyEmailModal } from './AuthModals.js';
 
@@ -145,8 +148,86 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
   return (
     <div className="auth-page-shell">
-      <div className="auth-card-wrap">
-        <div className="auth-card">
+      <div className="auth-responsive-layout">
+        {/* Left Column on Desktop / Top Features Section on Mobile */}
+        <div className="auth-features-section">
+          {/* Desktop Hero Branding (visible on desktop >= 1024px) */}
+          <div className="auth-desktop-hero desktop-only">
+            <div className="auth-desktop-badge">
+              <ShieldCheck size={16} />
+              <span>Enterprise Document Governance • Multi-Role Access</span>
+            </div>
+            <h2 className="auth-desktop-title">
+              Provision Corporate Identity & Zero-Trust Governance
+            </h2>
+            <p className="auth-desktop-subtitle">
+              Join your organization's confidential document repository with cryptographically verified roles, automated email verification, and audit provenance.
+            </p>
+          </div>
+
+          <div className="auth-feature-card">
+            <div className="auth-feature-icon-wrap">
+              <ShieldCheck size={20} className="auth-feature-icon" />
+            </div>
+            <div className="auth-feature-content">
+              <h4 className="auth-feature-title">Default Viewer Privileges</h4>
+              <p className="auth-feature-desc">
+                In accordance with Zero-Trust principles, new corporate accounts start with standard Viewer permissions to prevent unauthorized data exposure.
+              </p>
+            </div>
+          </div>
+
+          <div className="auth-feature-card">
+            <div className="auth-feature-icon-wrap">
+              <Clock size={20} className="auth-feature-icon" />
+            </div>
+            <div className="auth-feature-content">
+              <h4 className="auth-feature-title">Document Owner Approval Queue</h4>
+              <p className="auth-feature-desc">
+                Selecting Document Owner submits an administrative approval request while immediately enabling safe read-only access.
+              </p>
+            </div>
+          </div>
+
+          {/* Third feature card visible on desktop */}
+          <div className="auth-feature-card desktop-only">
+            <div className="auth-feature-icon-wrap" style={{ background: '#eff6ff', color: '#2563eb' }}>
+              <Activity size={20} />
+            </div>
+            <div className="auth-feature-content">
+              <h4 className="auth-feature-title">Tamper-Proof Audit Trail</h4>
+              <p className="auth-feature-desc">
+                Every account creation, verification event, and role assignment is permanently recorded on an append-only SHA-256 cryptographic chain.
+              </p>
+            </div>
+          </div>
+
+          {/* Protocol divider visible on mobile */}
+          <div className="auth-protocol-divider mobile-only">
+            <Shield size={14} className="auth-protocol-shield" />
+            <span>Enterprise Document Management • Verified Zero-Trust Protocol</span>
+          </div>
+
+          {/* Desktop trust badges */}
+          <div className="auth-desktop-trust-pills desktop-only">
+            <div className="auth-trust-pill">
+              <ShieldCheck size={14} className="auth-pill-icon" />
+              <span>Zero-Trust Architecture</span>
+            </div>
+            <div className="auth-trust-pill">
+              <Award size={14} className="auth-pill-icon" />
+              <span>SOC2 & ISO 27001 Ready</span>
+            </div>
+            <div className="auth-trust-pill">
+              <Zap size={14} className="auth-pill-icon text-emerald" />
+              <span>SHA-256 Provenance</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Register Card */}
+        <div className="auth-card-wrap">
+          <div className="auth-card">
           {/* Brand Header */}
           <div className="auth-card-brand">
             <div className="auth-brand-icon-box">
@@ -513,6 +594,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Modals */}

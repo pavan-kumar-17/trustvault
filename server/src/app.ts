@@ -25,11 +25,11 @@ export function createApp(): Express {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
           styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-          imgSrc: ["'self'", 'data:', 'blob:'],
-          connectSrc: ["'self'"],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+          imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+          connectSrc: ["'self'", 'https:', 'http:', 'wss:'],
         },
       },
       crossOriginEmbedderPolicy: false,
@@ -39,7 +39,7 @@ export function createApp(): Express {
   // 3. CORS Configuration
   app.use(
     cors({
-      origin: env.PUBLIC_APP_ORIGIN,
+      origin: true,
       credentials: true,
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

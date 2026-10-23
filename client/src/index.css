@@ -1941,10 +1941,72 @@ table.saas-table tbody tr:hover {
   box-sizing: border-box;
 }
 
+/* Responsive Authentication Master Layout */
+.auth-responsive-layout {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  margin: 0 auto;
+}
+
+/* Visibility toggles */
+.desktop-only {
+  display: none !important;
+}
+
+.mobile-only {
+  display: flex !important;
+}
+
+/* Desktop Hero Section styles */
+.auth-desktop-hero {
+  margin-bottom: 2rem;
+}
+
+.auth-desktop-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.auth-desktop-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.85rem;
+}
+
+.auth-desktop-subtitle {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #475569;
+  margin-bottom: 1.75rem;
+}
+
+.auth-desktop-trust-pills {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1.75rem;
+}
+
 /* Features Highlights at Top / Hero */
 .auth-features-section {
   width: 100%;
-  max-width: 460px;
+  max-width: 480px;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
@@ -2768,17 +2830,71 @@ table.saas-table tbody tr:hover {
   .auth-page-shell {
     padding: 3.5rem 2rem 5rem;
     justify-content: center;
+    align-items: center;
+  }
+  .auth-responsive-layout {
+    display: grid;
+    grid-template-columns: 1.15fr 480px;
+    max-width: 1140px;
+    width: 100%;
+    gap: 4.5rem;
+    align-items: center;
+    margin: auto;
+  }
+  .desktop-only {
+    display: flex !important;
+  }
+  div.auth-desktop-hero.desktop-only {
+    display: block !important;
+  }
+  .mobile-only {
+    display: none !important;
+  }
+  .auth-features-section {
+    max-width: 100%;
+    margin-bottom: 0;
+    gap: 1.15rem;
+  }
+  .auth-feature-card {
+    padding: 1.15rem 1.35rem;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+  .auth-feature-icon-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+  }
+  .auth-feature-title {
+    font-size: 1.05rem;
+  }
+  .auth-feature-desc {
+    font-size: 0.875rem;
+    line-height: 1.5;
   }
   .auth-card-wrap {
     max-width: 480px;
+    width: 100%;
   }
   .auth-card {
     padding: 2.5rem 2.25rem;
-    border-radius: 18px;
-    box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.06), 0 10px 10px -5px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(226, 232, 240, 0.8);
+    border-radius: 20px;
+    box-shadow: 0 25px 35px -5px rgba(15, 23, 42, 0.07), 0 10px 15px -5px rgba(15, 23, 42, 0.03), 0 0 0 1px rgba(226, 232, 240, 0.9);
   }
   .auth-card-heading {
     font-size: 1.75rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .auth-responsive-layout {
+    max-width: 1240px;
+    gap: 6rem;
+  }
+  .auth-desktop-title {
+    font-size: 2.65rem;
   }
 }
 
